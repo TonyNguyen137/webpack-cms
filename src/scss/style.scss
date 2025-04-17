@@ -10,3 +10,14 @@
 // @use 'components/nav-offcanvas';
 // @use 'components/backdrop';
 // @use 'components/tabs';
+
+.nav[data-expand='md'] {
+  background-color: red;
+}
+.nav[data-expand='lg'] {
+  background-color: yellow;
+
+  .nav__container {
+    background-color: pink;
+  }
+}
