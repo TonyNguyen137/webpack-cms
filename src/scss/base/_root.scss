@@ -1,0 +1,94 @@
+@use "../abstracts" as *;
+@use "sass:map";
+@use "sass:meta";
+@use "sass:list";
+@use "sass:math";
+
+:root {
+  @include generate-custom-properties(
+    if(meta.variable-exists(grid-breakpoints), $grid-breakpoints, null)
+  );
+  @include generate-custom-properties(
+    if(meta.variable-exists(font-families), $font-families, null)
+  );
+  @include generate-custom-properties(
+    if(meta.variable-exists(box-shadows), $box-shadows, null)
+  );
+  @include generate-custom-properties(
+    if(meta.variable-exists(z-indexes), $z-indexes, null)
+  );
+  @include generate-custom-properties(
+    if(meta.variable-exists(transitions), $transitions, null)
+  );
+  @include generate-custom-properties(
+    if(meta.variable-exists(borders), $borders, null)
+  );
+  @include generate-custom-properties(
+    if(meta.variable-exists(border-radius), $border-radius, null)
+  );
+  @include generate-custom-properties(
+    if(meta.variable-exists(border-widths), $border-widths, null)
+  );
+  @include generate-custom-properties(
+    if(meta.variable-exists(border-styles), $border-styles, null)
+  );
+  @include generate-custom-properties(
+    if(meta.variable-exists(focus-rings), $focus-rings, null)
+  );
+  @include generate-simple-custom-properties($simple-custom-properties);
+
+  // Custom properties for default color theme
+  @include generate-color-custom-properties(
+    $selected-theme-hex-colors,
+    $color-prefix
+  );
+
+  @include generate-color-custom-properties-rgb(
+    $selected-theme-rgb-colors,
+    $color-prefix
+  );
+
+  // custom properties for default hover color
+  @include generate-color-custom-properties(
+    if(
+      map.get($color-theme, $selected-theme, hover),
+      map.get($color-theme, $selected-theme, hover),
+      ()
+    ),
+    $hover-prefix
+  );
+  @include generate-color-custom-properties-rgb(
+    if(
+      map.get($color-theme, $selected-theme, hover),
+      map-loop(map.get($color-theme, $selected-theme, hover), to-rgb, "$value"),
+      ()
+    ),
+    $hover-prefix
+  );
+
+  // Generates CSS custom properties for sizes using clamp() values.
+  @include generate-clamp-custom-properties($size-clamp, $size-prefix);
+
+  // Generates CSS custom properties for spacing using clamp() values.
+  @include generate-clamp-custom-properties($spacing-clamp, $spacing-prefix);
+
+  // Generates responsive custom properties
+  @include generate-responsive-custom-properties(
+    $responsive-custom-properties,
+    $responsive-custom-properties-prefix
+  );
+
+  // @if ($enable-media-query-dark-mode) {
+  //   @media (prefers-color-scheme: dark) {
+  //     @each $color, $shade-map in map.get($color-theme, dark) {
+  //       @each $shade, $value in $shade-map {
+  //         --#{$prefix}#{$color-prefix}#{$color}-#{$shade}: #{$value};
+  //       }
+  //     }
+  //   }
+  // }
+}
+
+@if $enable-color-themes {
+  @include generate-color-themes($color-theme);
+}

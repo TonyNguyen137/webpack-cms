@@ -1,0 +1,72 @@
+<nav style="--breadcrumb-divider: '>'" class="breadcrumb" aria-label="breadcrumb">
+  <ol class="breadcrumb__list">
+    <li class="breadcrumb__list-item">
+      <a class="breadcrumb__link" href="#">Library</a>
+    </li>
+    <li class="breadcrumb__list-item">
+      <a class="breadcrumb__link" href="#">Home</a>
+    </li>
+    <li class="breadcrumb__list-item active" aria-current="page">Data</li>
+  </ol>
+</nav>
+
+<!-- advanced breadcrumb-->
+<nav class="breadcrumb">
+  <ul class="breadcrumb__list">
+    <li class="breadcrumb__list-item"><a class="breadcrumb__link" href="#">Home</a></li>
+    <li class="breadcrumb__list-item"><a class="breadcrumb__link" href="#">CSS</a></li>
+    <li class="breadcrumb__list-item"><a class="breadcrumb__link" href="#">CSS 2</a></li>
+    <li class="breadcrumb__list-item" aria-current="page">Tryit: Breadcrumb pagination</li>
+  </ul>
+</nav>
+
+<style>
+  .breadcrumb {
+    &__list {
+      list-style: none;
+      display: inline-table;
+      padding-inline-start: 1px;
+      font-size: 12px;
+      margin-block-start: 6px;
+      margin-block-end: 6px;
+    }
+
+    &__list-item {
+      display: inline;
+    }
+
+    &__list:last-child &__list-item {
+      padding-right: 5px;
+    }
+
+    &__link {
+      float: left;
+      background: #e7e9eb;
+      padding: 3px 10px 3px 20px;
+      position: relative;
+      margin: 0 5px 0 0;
+      text-decoration: none;
+      color: #555;
+    }
+
+    &__link:before {
+      content: '';
+      border-top: 12px solid transparent;
+      border-bottom: 12px solid transparent;
+      border-left: 12px solid #fff;
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+    &__link:after {
+      content: '';
+      border-top: 12px solid transparent;
+      border-bottom: 12px solid transparent;
+      border-left: 12px solid #e7e9eb;
+      position: absolute;
+      right: -12px;
+      top: 0;
+      z-index: 1;
+    }
+  }
+</style>

@@ -1,0 +1,129 @@
+@use '../abstracts' as *;
+@use 'sass:map';
+
+.navbar {
+  --_offcanvas-width: 400px;
+  --_border: 1px solid #000;
+  --_gap: 1rem;
+
+  &__container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__btn-open,
+  &__btn-close {
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+
+    // &:focus-visible,
+    // &:focus {
+    //   outline: 0;
+    //   box-shadow: var(--box-shadow-focus);
+    // }
+  }
+
+  &__svg {
+    display: block;
+  }
+
+  &__btn-open[aria-expanded='true'] + .navbar__offcanvas {
+    transform: translate(0);
+  }
+
+  &__list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__link {
+    text-decoration: none;
+  }
+
+  &__dropdown-toggle,
+  &__link {
+    padding-block: 8px;
+    display: block;
+    color: var(--clr-primary);
+
+    &:focus-visible {
+      outline: 0;
+      box-shadow: var(--box-shadow-focus);
+    }
+  }
+
+  &__offcanvas {
+    outline: 5px dashed black;
+    padding: 1rem;
+    padding-inline: 16px;
+
+    width: var(--_offcanvas-width);
+    max-width: 100%;
+
+    background-color: var(--clr-light);
+    background-clip: padding-box;
+
+    position: fixed;
+    bottom: 0;
+
+    z-index: var(--z-2);
+
+    display: flex;
+    flex-direction: column;
+    row-gap: 32px;
+    transition: transform var(--transDur, 300ms) ease;
+
+    // offcanvas direction - default end
+    top: 0;
+    right: 0;
+    border-left: var(--_border);
+    transform: translateX(100%);
+  }
+
+  &__offcanvas-header {
+    text-align: end;
+  }
+
+  /* == offcanvas direction == */
+  &[data-direction='start'] {
+    top: 0;
+    left: 0;
+    border-right: var(--_border);
+    transform: translateX(-100%);
+  }
+
+  /* == expand == */
+  $grid-breakpoints-without-xs: map.remove($grid-breakpoints, 'xs');
+
+  @each $bp in map.keys($grid-breakpoints-without-xs) {
+    @include mq($bp) {
+      &[data-expand='#{$bp}'] {
+        .navbar__offcanvas {
+          all: unset;
+        }
+
+        // Apply styles when the search bar is present
+        .navbar__offcanvas-body {
+          display: flex;
+          align-items: center;
+          column-gap: var(--_gap);
+        }
+        //
+
+        .navbar__btn-open,
+        .navbar__btn-close {
+          display: none;
+        }
+
+        .navbar__list {
+          flex-direction: row;
+          column-gap: var(--_gap);
+          overflow-y: revert;
+        }
+      }
+    }
+  }
+}

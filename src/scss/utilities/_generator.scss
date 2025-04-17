@@ -1,0 +1,36 @@
+/* 
+This file contains SCSS code sourced from the Bootstrap framework.
+Source: https://github.com/twbs/bootstrap/blob/main/scss/mixins/_utilities.scss
+The code used in accordance with Bootstrap's open-source license (MIT).
+Modifications may have been made to the original code.
+*/
+
+@use '../abstracts' as *;
+@use 'sass:map';
+@use 'sass:meta';
+@use 'sass:list';
+
+// Loop over each breakpoint
+@each $breakpoint in map.keys($grid-breakpoints) {
+  // Generate media query if needed
+  @include media-breakpoint-up($breakpoint) {
+    // @debug $breakpoint;
+    $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
+
+    // Loop over each utility property
+    @each $key, $utility in $utilities {
+      // The utility can be disabled with `false`, thus check if the utility is a map first
+      // Only proceed if responsive media queries are enabled or if it's the base media query
+      @if meta.type-of($utility) == 'map' and (map.get($utility, responsive) or $infix == '') {
+        @include generate-utility($utility, $infix, $key);
+      }
+    }
+
+    // Loop over each complex utility property
+    @each $key, $utility in $complex-utilities {
+      @if meta.type-of($utility) == 'map' and (map.get($utility, responsive) or $infix == '') {
+        @include generate-complex-utility($utility, $infix, $key);
+      }
+    }
+  }
+}

@@ -1,0 +1,455 @@
+/* 
+This file contains SCSS variables sourced from the Bootstrap framework.
+Source: https://github.com/twbs/bootstrap/blob/main/scss/_variables.scss
+The code used in accordance with Bootstrap's open-source license (MIT).
+Modifications may have been made to the original code.
+*/
+@use 'sass:map';
+@use 'sass:string';
+@use 'sass:list';
+@use 'sass:math';
+@use 'functions' as *;
+
+/* ****************************************************** */
+/* General setting
+/* ****************************************************** */
+
+$prefix: '';
+$enable-negative-margins: true;
+$enable-media-query-dark-mode: false;
+$enable-color-themes: true;
+$enable-transitions: true;
+$enable-reduced-motion: false;
+
+/* ****************************************************** */
+/* Breakpoints 
+/* ****************************************************** */
+
+// px values
+$grid-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px,
+);
+
+// rem values
+// $grid-breakpoints: (
+//   xs: 0,
+//   sm: px-to-rem(576),
+//   md: px-to-rem(768),
+//   lg: px-to-rem(992),
+//   xl: px-to-rem(1200),
+//   xxl: px-to-rem(1400),
+// );
+
+/* ****************************************************** */
+/* Container max-widths 
+/* ****************************************************** */
+
+$container-max-widths: (
+  sm: 540px,
+  md: 720px,
+  lg: 960px,
+  xl: 1140px,
+  xxl: calc(1320px + 2 * var(--container-padding-res)),
+);
+
+/* == Bootstrap grid system  & container == */
+
+$bs-prefix: bs-;
+$enable-bootstrap-grid-system: true;
+$enable-gutters: false;
+$grid-columns: 12;
+$grid-gutter-width: 24px;
+$grid-row-columns: 6;
+
+// container setting
+$enable-container-classes: true;
+$enable-max-container-classes: false;
+$enable-max-container-fluid-classes: false;
+$container-padding-x: 12px;
+
+/* ****************************************************** */
+/* Color theme
+/* ****************************************************** */
+
+$color-prefix: clr-;
+$hover-prefix: hover-;
+
+$primary: #0d6efd;
+$secondary: #6c757d;
+$success: #198754;
+$info: #0dcaf0;
+$warning: #ffc107;
+$danger: #dc3545;
+$light: #f8f9fa;
+$dark: #212529;
+
+$color-theme: (
+  default: (
+    color: (
+      'primary': $primary,
+      'secondary': $secondary,
+      'success': $success,
+      'info': $info,
+      'warning': $warning,
+      'danger': $danger,
+      'light': $light,
+      'dark': $dark,
+      'zero': #000,
+      'one': #fff,
+      'black': #000,
+      'white': #fff,
+    ),
+    hover: (
+      'primary': #012345,
+      'secondary': $secondary,
+      'success': $success,
+      'info': $info,
+      'warning': $warning,
+      'danger': $danger,
+      'light': $light,
+      'dark': $dark,
+      'zero': #000,
+      'quindecenary': #fff,
+    ),
+  ),
+);
+
+$selected-theme: default;
+
+$selected-theme-hex-colors: if(
+  map.has-key($color-theme, $selected-theme, color),
+  map.get($color-theme, $selected-theme, color),
+  null
+);
+
+$selected-theme-rgb-colors: if(
+  $selected-theme-hex-colors,
+  map-loop($selected-theme-hex-colors, to-rgb, '$value'),
+  null
+);
+
+/* ************************************************************* */
+/*  Custom properties using clamp() for responsive values
+/* ************************************************************* */
+
+$size-prefix: fs-fluid;
+
+$size-clamp: (
+  heading-1: (
+    threshold: (
+      576px: 32,
+      1400px: 150,
+    ),
+    threshold-unit: 'rem',
+    preferred-unit: 'rem',
+  ),
+  heading-2: (
+    threshold: (
+      576px: 28,
+      1400px: 32,
+    ),
+    threshold-unit: 'rem',
+    preferred-unit: 'rem',
+  ),
+  '12-16': (
+    threshold: (
+      320px: 12,
+      768px: 16,
+    ),
+    threshold-unit: 'rem',
+    preferred-unit: 'rem',
+  ),
+);
+
+$spacing-prefix: fluid;
+
+$spacing-clamp: (
+  '15-30': (
+    threshold: (
+      576px: 32,
+      1400px: 150,
+    ),
+    // default px
+    threshold-unit: 'px',
+    // default px
+    preferred-unit: 'px',
+    // default viewport
+    relative-to: 'viewport',
+  ),
+  '28-40': (
+    threshold: (
+      576px: 28,
+      1400px: 40,
+    ),
+  ),
+);
+
+/* ************************************************************* */
+/* Simple custom properties
+/* ************************************************************* */
+
+$simple-custom-properties: (
+  'container-padding-x': (
+    value: $container-padding-x,
+  ),
+  'example-custom-property': (
+    value: 32px,
+    property: font-size,
+    class: example-class,
+  ),
+);
+
+/* ****************************************************** */
+/* Responsive custom Properties - xs is default
+/* ****************************************************** */
+
+$responsive-custom-properties-prefix: '';
+
+$responsive-custom-properties: (
+  'xs': (
+    'heading-1': (
+      value: 24px,
+      property: font-size,
+      class: res-heading-1,
+    ),
+    'container-padding-res': (
+      value: 30px,
+    ),
+  ),
+  'sm': (
+    'heading-1': 34px,
+    'container-max-width': map.get($container-max-widths, sm),
+    'container-padding-res': 16px,
+  ),
+  'md': (
+    'container-max-width': map.get($container-max-widths, md),
+  ),
+  'lg': (
+    'container-max-width': map.get($container-max-widths, lg),
+  ),
+  'xl': (
+    'container-max-width': map.get($container-max-widths, xl),
+  ),
+  'xxl': (
+    'container-max-width': map.get($container-max-widths, xxl),
+  ),
+);
+
+/* ****************************************************** */
+/* Spacing
+/* ****************************************************** */
+
+$factor: 0.25rem;
+$sizes-regular: ();
+
+@for $i from 0 through 30 {
+  $sizes-regular: map.merge(
+    $sizes-regular,
+    (
+      $i: if($i == 0, $i, $factor * $i),
+    )
+  );
+}
+
+// Add additional regular sizes manually
+$sizes-regular: map.merge(
+  $sizes-regular,
+  (
+    40: 40 * $factor,
+  )
+);
+
+$sizes-irregular: (
+  i-121: 121px,
+  i-n121: px-to-rem(-121),
+  i-67: 67px,
+);
+
+$negative-spacers: if($enable-negative-margins, negativify-map($sizes-regular), null);
+
+/* ****************************************************** */
+/* Font family
+/* ****************************************************** */
+
+$font-families: (
+  custom-property-name: 'font-family',
+  values: (
+    main: (
+      'Arial',
+      sans-serif,
+    ),
+    sub: (
+      'Liberation Mono',
+      monospace,
+    ),
+  ),
+);
+
+/* ****************************************************** */
+/* Font weights
+/* ****************************************************** */
+
+$font-weights: (
+  thin: 100,
+  extra-light: 200,
+  light: 300,
+  normal: 400,
+  medium: 500,
+  semibold: 600,
+  bold: 700,
+  extra-bold: 800,
+  'black': 900,
+);
+
+/* ****************************************************** */
+/* Line-heights 
+/* ****************************************************** */
+
+$line-heights: (
+  base: 1.5,
+  heading: 1.1,
+  sm: 1.25,
+  lg: 2,
+);
+
+/* ****************************************************** */
+/* Box shadows 
+/* ****************************************************** */
+
+$box-shadows: (
+  custom-property-name: 'box-shadow',
+  values: (
+    focus: 0 0 0 0.25rem rgba(var(--clr-primary-rgb), 0.25),
+    focus-inset: inset 0 0 0 0.25rem rgba(var(--clr-primary-rgb), 0.25),
+    null: 0 0.5rem 1rem rgba(var(--clr-dark-rgb), 0.15),
+    sm: 0 0.125rem 0.25rem rgba(var(--clr-dark-rgb), 0.075),
+    lg: 0 1rem 3rem rgba(var(--clr-dark-rgb), 0.175),
+    inset: inset 0 1px 2px rgba(var(--clr-dark-rgb), 0.075),
+    none: none,
+  ),
+);
+
+/* ****************************************************** */
+/* Z-index 
+/* ****************************************************** */
+
+$z-indexes: (
+  custom-property-name: 'z',
+  values: (
+    n1: -1,
+    0: 0,
+    1: 999,
+    2: 998,
+    3: 997,
+    4: 996,
+  ),
+);
+
+/* ****************************************************** */
+/* Borders  
+/* ****************************************************** */
+
+$borders: (
+  custom-property-name: 'border',
+  values: (
+    solid-black: 1px solid var(--clr-zero),
+  ),
+);
+
+$border-widths: (
+  custom-property-name: 'border-width',
+  values: (
+    0: 0,
+    1: 1px,
+  ),
+);
+
+$border-styles: (
+  custom-property-name: 'border-style',
+  values: solid dashed dotted,
+);
+
+/* ****************************************************** */
+/* Border radius 
+/* ****************************************************** */
+
+$border-radius: (
+  custom-property-name: 'radius',
+  values: (
+    base: 5px,
+    10: 10px,
+  ),
+);
+
+/* ****************************************************** */
+/* Transitions
+/* ****************************************************** */
+
+$transitions: (
+  custom-property-name: 'transition',
+  values: (
+    focus: 0.15s ease-in-out,
+    base: all 0.2s ease-in-out,
+    fade: opacity 0.15s linear,
+    collapse: height 0.35s ease,
+    collapse-width: width 0.35s ease,
+  ),
+);
+
+/* ****************************************************** */
+/* Focus rings
+/* ****************************************************** */
+
+$focus-rings: (
+  custom-property-name: 'focus-ring',
+  values: (
+    primary: 0 0 0 0.25rem rgba(var(--clr-primary-rgb), 0.75),
+  ),
+);
+
+/* ****************************************************** */
+/* Maps
+/* ****************************************************** */
+
+$transition-base: all 0.2s ease-in-out !default;
+$transition-fade: opacity 0.15s linear !default;
+$transition-collapse: height 0.35s ease !default;
+$transition-collapse-width: width 0.35s ease !default;
+
+$percentage-values: (
+  0: 0,
+  25: 25%,
+  50: 50%,
+  75: 75%,
+  100: 100%,
+);
+
+$decimal-percentage-values: (
+  0: 0,
+  25: 0.25,
+  50: 0.5,
+  75: 0.75,
+  100: 1,
+);
+
+$viewport-height-values: (
+  25: 25vh,
+  50: 50vh,
+  75: 75vh,
+  100: 100vh,
+);
+$viewport-width-values: (
+  25: 25vw,
+  50: 50vw,
+  75: 75vw,
+  100: 100vw,
+);
+
+$fixed-values: (
+  200: 200px,
+);

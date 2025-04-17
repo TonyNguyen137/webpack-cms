@@ -1,0 +1,20 @@
+@use '../abstracts' as *;
+
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--z-3);
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--clr-black);
+  transition: opacity var(--transitionDuration, 150ms) linear;
+
+  &.fade {
+    opacity: 0;
+  }
+
+  &.show {
+    opacity: 0.5;
+  }
+}

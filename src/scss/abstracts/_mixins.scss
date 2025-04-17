@@ -1,0 +1,835 @@
+/* 
+This file contains SCSS mixins sourced from the Bootstrap framework.
+Source: https://github.com/twbs/bootstrap/tree/main/scss/mixins
+These mixins are used in accordance with Bootstrap's open-source license (MIT).
+Modifications may have been made to the original mixins.
+*/
+@use 'sass:meta';
+@use 'sass:math';
+@use 'sass:map';
+@use 'sass:list';
+@use 'sass:string';
+@use 'sass:selector';
+@use 'functions' as *;
+@use 'variables' as *;
+
+@mixin transition($transition...) {
+  @if list.length($transition) == 0 {
+    $transition: $transition-base;
+  }
+
+  @if list.length($transition) > 1 {
+    @each $value in $transition {
+      @if $value == null or $value == none {
+        @warn "The keyword 'none' or 'null' must be used as a single argument.";
+      }
+    }
+  }
+
+  @if $enable-transitions {
+    @if list.nth($transition, 1) != null {
+      transition: $transition;
+    }
+
+    @if $enable-reduced-motion and list.nth($transition, 1) != null and list.nth($transition, 1) != none {
+      @media (prefers-reduced-motion: reduce) {
+        transition: none;
+      }
+    }
+  }
+}
+
+// media query
+@mixin mq($size, $has-media-hover: false) {
+  @if map.has-key($grid-breakpoints, $size) and $size != 'xs' {
+    $breakpoint: map.get($grid-breakpoints, $size);
+
+    @if ($has-media-hover) {
+      @media (min-width: $breakpoint) and (hover: hover) and (pointer: fine) {
+        @content;
+      }
+    } @else {
+      @media (min-width: $breakpoint) {
+        @content;
+      }
+    }
+  } @else {
+    @error 'the keyword #{$size} is not in the $breakpoints map';
+  }
+}
+
+@mixin respond-min($breakpoint) {
+  @media (min-width: #{$breakpoint}px) {
+    @content;
+  }
+}
+
+@mixin make-container($gutter: $container-padding-x) {
+  width: 100%;
+  padding-inline: if($gutter == 'responsive', var(--container-padding-res), $gutter);
+  margin-inline: auto;
+}
+
+@mixin make-container-fluid-max($max-width, $gutter: $container-padding-x) {
+  max-width: $max-width;
+  padding-inline: if($gutter == 'responsive', var(--container-padding-res), $gutter);
+  margin-inline: auto;
+}
+
+@mixin media-breakpoint-up($name, $breakpoints: $grid-breakpoints) {
+  $min: breakpoint-min($name, $breakpoints);
+  @if $min {
+    @media screen and (min-width: $min) {
+      @content;
+    }
+  } @else {
+    @content;
+  }
+}
+
+// Bootstrap grid system
+@mixin row-cols($count) {
+  > * {
+    flex: 0 0 auto;
+    width: math.percentage(math.div(1, $count));
+  }
+}
+
+@mixin make-row($gutter: $grid-gutter-width) {
+  --#{$bs-prefix}gutter-x: #{$gutter};
+  --#{$bs-prefix}gutter-y: 0;
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: calc(-1 * var(--#{$bs-prefix}gutter-y));
+  margin-right: calc(-0.5 * var(--#{$bs-prefix}gutter-x));
+  margin-left: calc(-0.5 * var(--#{$bs-prefix}gutter-x));
+}
+
+@mixin make-col-ready() {
+  // Add box sizing if only the grid is loaded
+  box-sizing: if(meta.variable-exists(include-column-box-sizing) and $include-column-box-sizing, border-box, null);
+  // Prevent columns from becoming too narrow when at smaller grid tiers by
+  // always setting `width: 100%;`. This works because we set the width
+  // later on to override this initial width.
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%; // Prevent `.col-auto`, `.col` (& responsive variants) from breaking out the grid
+  padding-right: calc(var(--#{$bs-prefix}gutter-x) * 0.5); // stylelint-disable-line function-disallowed-list
+  padding-left: calc(var(--#{$bs-prefix}gutter-x) * 0.5); // stylelint-disable-line function-disallowed-list
+  margin-top: var(--#{$bs-prefix}gutter-y);
+}
+
+@mixin make-col($size: false, $columns: $grid-columns) {
+  @if $size {
+    flex: 0 0 auto;
+    width: math.percentage(math.div($size, $columns));
+  } @else {
+    flex: 1 1 0;
+    max-width: 100%;
+  }
+}
+
+@mixin make-col-auto() {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+@mixin make-col-offset($size, $columns: $grid-columns) {
+  $num: math.div($size, $columns);
+  margin-left: if($num == 0, 0, math.percentage($num));
+}
+
+@mixin make-grid-columns($columns: $grid-columns, $gutter: $grid-gutter-width, $breakpoints: $grid-breakpoints) {
+  @each $breakpoint in map.keys($breakpoints) {
+    $infix: breakpoint-infix($breakpoint, $breakpoints);
+
+    @include media-breakpoint-up($breakpoint, $breakpoints) {
+      // Provide basic `.col-{bp}` classes for equal-width flexbox columns
+      .col#{$infix} {
+        flex: 1 0 0%; // Flexbugs #4: https://github.com/philipwalton/flexbugs#flexbug-4
+      }
+
+      .row-cols#{$infix}-auto > * {
+        @include make-col-auto();
+      }
+
+      @if $grid-row-columns > 0 {
+        @for $i from 1 through $grid-row-columns {
+          .row-cols#{$infix}-#{$i} {
+            @include row-cols($i);
+          }
+        }
+      }
+
+      .col#{$infix}-auto {
+        @include make-col-auto();
+      }
+
+      @if $columns > 0 {
+        @for $i from 1 through $columns {
+          .col#{$infix}-#{$i} {
+            @include make-col($i, $columns);
+          }
+        }
+
+        // `$columns - 1` because offsetting by the width of an entire row isn't possible
+        @for $i from 0 through ($columns - 1) {
+          @if not($infix == '' and $i == 0) {
+            // Avoid emitting useless .offset-0
+            .offset#{$infix}-#{$i} {
+              @include make-col-offset($i, $columns);
+            }
+          }
+        }
+      }
+
+      // Gutters
+      //
+      // Make use of `.g-*`, `.gx-*` or `.gy-*` utilities to change spacing between the columns.
+      @if ($enable-gutters) {
+        @each $key, $value in $sizes-regular {
+          .g#{$infix}-#{$key},
+          .gx#{$infix}-#{$key} {
+            --#{$bs-prefix}gutter-x: #{$value};
+          }
+
+          .g#{$infix}-#{$key},
+          .gy#{$infix}-#{$key} {
+            --#{$bs-prefix}gutter-y: #{$value};
+          }
+        }
+      }
+    }
+  }
+}
+
+@mixin make-cssgrid($columns: $grid-columns, $breakpoints: $grid-breakpoints) {
+  @each $breakpoint in map-keys($breakpoints) {
+    $infix: breakpoint-infix($breakpoint, $breakpoints);
+
+    @include media-breakpoint-up($breakpoint, $breakpoints) {
+      @if $columns > 0 {
+        @for $i from 1 through $columns {
+          .g-col#{$infix}-#{$i} {
+            grid-column: auto / span $i;
+          }
+        }
+
+        // Start with `1` because `0` is an invalid value.
+        // Ends with `$columns - 1` because offsetting by the width of an entire row isn't possible.
+        @for $i from 1 through ($columns - 1) {
+          .g-start#{$infix}-#{$i} {
+            grid-column-start: $i;
+          }
+        }
+      }
+    }
+  }
+}
+@mixin generate-complex-utility($utility, $infix: '', $key, $is-rfs-media-query: false) {
+  $values: map.get($utility, values);
+
+  // Check if the list is not empty before accessing the first element
+  @if list.length($values) > 0 and $values != null {
+    // If the values are a list or string, convert it into a map
+    @if meta.type-of($values) == 'string' or meta.type-of(list.nth($values, 1)) != 'list' {
+      $values: list.zip($values, $values);
+    }
+  }
+
+  $is-important: if(map.get($utility, important), true, false);
+  $required-property: if(map.has-key($utility, required-property), map.get($utility, required-property), null);
+  $properties: map.get($utility, property);
+  $custom-property-value: if(
+    map.has-key($utility, custom-property-value),
+    map.get($utility, custom-property-value),
+    null
+  );
+
+  // @debug $custom-property-value;
+  $class: map.get($utility, class);
+
+  // Multiple properties are possible, for example with vertical or horizontal margins or paddings
+  @if meta.type-of($properties) == 'string' {
+    $properties: list.append((), $properties);
+  }
+  $css-var: map.get($utility, css-var);
+  $is-local-vars: map.get($utility, local-vars);
+  $is-rtl: map.get($utility, rtl);
+  $custom-property-name: map.get($utility, custom-property-name);
+  $complex-selectors: if(map.has-key($utility, complex-selectors), map.get($utility, complex-selectors), null);
+
+  // 0. Generates utility classes with nested selector styles
+  @if ($complex-selectors) {
+    // @debug 0;
+
+    $_selectors: map.get($utility, complex-selectors);
+
+    // @debug _selectors $_selectors;
+
+    .#{$class} {
+      // Loop through the properties defined for each utility
+      @each $property, $value in $_selectors {
+        // If the value is a map, iterate through it (for nested selectors like 'a')
+        // @debug property $property;
+        // @debug value $value;
+
+        @if meta.type-of($value) == 'map' {
+          $_nested-selector: $property;
+
+          & #{$_nested-selector} {
+            @each $nested-property, $nested-value in $value {
+              #{$nested-property}: #{$nested-value};
+            }
+          }
+        } @else {
+          #{$property}: #{$value};
+        }
+      }
+    }
+  }
+
+  // 1. Utility classes that use CSS custom properties from the $simple-custom-properties map in _variables.scss.
+  @if ($key == 'simple-and-resposive-custom-properties') {
+    @debug 1;
+    // @debug key $key;
+
+    @include make-simple-custom-property-utility($values);
+  }
+
+  // 2. maps $custom-property as value to a property
+  @if $custom-property-value {
+    @debug 2;
+
+    $property-class: if(map.has-key($utility, class), map.get($utility, class), '');
+
+    $infix: if($property-class == '' and string.slice($infix, 1, 1) == '-', string.slice($infix, 2), $infix);
+
+    @each $property in $properties {
+      .#{$property-class + $infix} {
+        #{$property}: var(--#{$custom-property-value}) if($is-important, !important, null);
+      }
+    }
+  }
+
+  // 3. Utility classes that use custom property values
+  @if ($custom-property-name) {
+    @debug 3;
+
+    $_property-name: $properties;
+
+    // @debug _prefix $_prefix;
+    // @debug properties $_property-name;
+    // @debug properties type meta.type-of($_property-name);
+    // @debug mapkeys map.keys($values);
+
+    @if list.length(map.keys($values)) > 0 {
+      @each $key in map.keys($values) {
+        // @debug key $key;
+        @if ($key != none) {
+          $_key: if($key != null, if($key == 0, '-0', '-' + $key), '');
+          // @debug _key $_key;
+          // @debug _key type-of meta.type-of($_key);
+          // @debug class $class;
+
+          .#{$class}#{$_key}#{if(map.has-key($utility, state), list.nth(map.get($utility, state), 1), '')} {
+            @if $required-property {
+              @each $property, $value in $required-property {
+                #{$property}: $value;
+              }
+            }
+
+            // loop through the properties if there are multiple
+            @if (list.length($_property-name) > 1) {
+              @each $_property in $_property-name {
+                // @debug _property $_property;
+                #{$_property}: var(--#{$prefix}#{$custom-property-name}#{$_key});
+              }
+            } @else {
+              #{$_property-name}: var(--#{$prefix}#{$custom-property-name}#{$_key});
+            }
+          }
+        } @else {
+          // @debug 3 else;
+          .#{$class}#{-none}#{if(map.has-key($utility, state), list.nth(map.get($utility, state), 1), '')} {
+            @if $required-property {
+              @each $property, $value in $required-property {
+                #{$property}: $value;
+              }
+            }
+            #{$_property-name}: none;
+          }
+        }
+      }
+    }
+  }
+
+  // 4. Utility classes with multiple properties
+  @if meta.type-of($properties) == 'map' {
+    @debug 4;
+
+    $property-class: if(map.has-key($utility, class), map.get($utility, class), '');
+    $prefix-class: null;
+    $suffix-class: null;
+
+    $dash-index: string.index($property-class, '-');
+    $state-1: if(map.has-key($utility, state), list.nth(map.get($utility, state), 1), null);
+    $state-2: if(
+      map.has-key($utility, state),
+      if(list.length(map.get($utility, state)) > 1, list.nth(map.get($utility, state), 2), null),
+      null
+    );
+
+    // @debug state-1 $state-1;
+    // @debug state-2 $state-2;
+
+    @if $dash-index {
+      $prefix-class: string.slice($property-class, 1, $dash-index - 1);
+      $suffix-class: string.slice($property-class, $dash-index + 1);
+    }
+
+    // $prefix-class: string.slice('Helvetica Neue', 11); // "Neue"
+    // @debug property-class $property-class;
+    // @debug prefix-class $prefix-class;
+
+    $infix: if($property-class == '' and string.slice($infix, 1, 1) == '-', string.slice($infix, 2), $infix);
+
+    .#{if($prefix-class, $prefix-class, $property-class)}#{$infix}#{
+      if($suffix-class, '-' + $suffix-class, '')}#{$state-1}#{if($state-2, ', .' + if($prefix-class, $prefix-class, $property-class) + $infix + if($suffix-class, '-' + $suffix-class, '') + $state-2, '')} {
+      @each $property, $value in $properties {
+        // @debug property $property;
+        // @debug value $value;
+
+        $value: normalize-value($value);
+        #{$property}: #{$value}#{if($is-important, ' !important', '')};
+      }
+    }
+  }
+
+  // 6. map values to $custom-property
+  @if $properties == null and $css-var {
+    @debug 6;
+
+    @each $key, $value in $values {
+      // Use custom class if present
+      $property-class: if(map.has-key($utility, class), map.get($utility, class), list.nth($properties, 1));
+
+      // @debug property-class $property-class;
+      $property-class: if($property-class == null, '', $property-class);
+
+      $infix: if($property-class == '' and string.slice($infix, 1, 1) == '-', string.slice($infix, 2), $infix);
+
+      // Don't prefix if value key is null (e.g. with shadow class)
+      $property-class-modifier: if($key, if($property-class == '' and $infix == '', '', '-') + $key, '');
+
+      .#{$property-class + $infix + $property-class-modifier} {
+        --#{$css-var}: #{$value};
+      }
+    }
+  }
+
+  // 7.
+  @if meta.type-of($properties) == 'list' and $custom-property-value == null and $custom-property-name == null {
+    @debug 7;
+
+    $state-1: if(map.has-key($utility, state), list.nth(map.get($utility, state), 1), '');
+    $state-2: if(
+      map.has-key($utility, state),
+      if(list.length(map.get($utility, state)) > 1, list.nth(map.get($utility, state), 2), null),
+      null
+    );
+
+    // @debug values $values;
+
+    @if ($values != null) {
+      @each $key, $value in $values {
+        // @debug key $key value $value;
+
+        // Use custom class if present
+        $property-class: if(map.has-key($utility, class), map.get($utility, class), list.nth($properties, 1));
+
+        // @debug property-class $property-class;
+        $property-class: if($property-class == null, '', $property-class);
+
+        $infix: if($property-class == '' and string.slice($infix, 1, 1) == '-', string.slice($infix, 2), $infix);
+
+        // Don't prefix if value key is null (e.g. with shadow class)
+        $property-class-modifier: if($key, if($property-class == '' and $infix == '', '', '-') + $key, '');
+
+        .#{$property-class
+          + $infix
+          + $property-class-modifier}#{$state-1}#{if($state-2, ', .' + $property-class + $infix + $property-class-modifier + $state-2, '')} {
+          @each $property in $properties {
+            @if $is-local-vars {
+              @each $local-var, $variable in $is-local-vars {
+                --#{$prefix}#{$local-var}: #{$variable};
+              }
+            }
+            #{$property}: $value if($is-important, !important, null);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Utility generator
+// Used to generate utilities & print utilities
+@mixin generate-utility($utility, $infix: '', $is-rfs-media-query: false) {
+  $values: map.get($utility, values);
+
+  // If the values are a list or string, convert it into a map
+  @if meta.type-of($values) == 'string' or meta.type-of(list.nth($values, 1)) != 'list' {
+    $values: list.zip($values, $values);
+  }
+  $is-important: if(map.has-key($utility, important), map.get($utility, important), false);
+  @each $key, $value in $values {
+    $properties: map.get($utility, property);
+
+    // Multiple properties are possible, for example with vertical or horizontal margins or paddings
+    @if meta.type-of($properties) == 'string' {
+      $properties: list.append((), $properties);
+    }
+
+    // Use custom class if present
+    $property-class: if(map.has-key($utility, class), map.get($utility, class), list.nth($properties, 1));
+    $property-class: if($property-class == null, '', $property-class);
+
+    // Use custom CSS variable name if present, otherwise default to `class`
+    $css-variable-name: if(
+      map.has-key($utility, css-variable-name),
+      map.get($utility, css-variable-name),
+      map.get($utility, class)
+    );
+
+    // State params to generate pseudo-classes
+    $state: if(map.has-key($utility, state), map.get($utility, state), ());
+
+    $infix: if($property-class == '' and string.slice($infix, 1, 1) == '-', string.slice($infix, 2), $infix);
+
+    // Don't prefix if value key is null (e.g. with shadow class)
+    $property-class-modifier: if($key, if($property-class == '' and $infix == '', '', '-') + $key, '');
+
+    @if map.get($utility, rfs) {
+      // Inside the media query
+      @if $is-rfs-media-query {
+        $val: rfs-value($value);
+
+        // Do not render anything if fluid and non fluid values are the same
+        $value: if($val == rfs-fluid-value($value), null, $val);
+      } @else {
+        $value: rfs-fluid-value($value);
+      }
+    }
+
+    $is-css-var: map.get($utility, css-var);
+    $is-local-vars: map.get($utility, local-vars);
+    $is-rtl: map.get($utility, rtl);
+
+    @if $value != null {
+      @if $is-rtl == false {
+        /* rtl:begin:remove */
+      }
+
+      @if $is-css-var {
+        .#{$property-class + $infix + $property-class-modifier} {
+          --#{$prefix}#{$css-variable-name}: #{$value};
+        }
+
+        @each $pseudo in $state {
+          .#{$property-class + $infix + $property-class-modifier}-#{$pseudo}:#{$pseudo} {
+            --#{$prefix}#{$css-variable-name}: #{$value};
+          }
+        }
+      } @else {
+        .#{$property-class + $infix + $property-class-modifier} {
+          @each $property in $properties {
+            @if $is-local-vars {
+              @each $local-var, $variable in $is-local-vars {
+                --#{$prefix}#{$local-var}: #{$variable};
+              }
+            }
+            #{$property}: $value if($is-important, !important, null);
+          }
+        }
+
+        @each $pseudo in $state {
+          .#{$property-class + $infix + $property-class-modifier}-#{$pseudo}:#{$pseudo} {
+            @each $property in $properties {
+              @if $is-local-vars {
+                @each $local-var, $variable in $is-local-vars {
+                  --#{$prefix}#{$local-var}: #{$variable};
+                }
+              }
+              #{$property}: $value if($is-important, !important, null);
+            }
+          }
+        }
+      }
+
+      @if $is-rtl == false {
+        /* rtl:end:remove */
+      }
+    }
+  }
+}
+
+@mixin make-simple-custom-property-utility($map: (), $prefix: $prefix) {
+  @if list.length(map.keys($map)) > 0 {
+    @each $key, $value-map in $map {
+      // @debug key $key;
+      // @debug value-map $value-map;
+
+      $_class: if(map.has-key($value-map, class), map.get($value-map, class), $key);
+      $_property: map.get($value-map, property);
+
+      @if ($_property) {
+        .#{$_class} {
+          #{$_property}: var(--#{$prefix}#{$key});
+        }
+      }
+    }
+  }
+}
+
+@mixin generate-responsive-custom-properties($map, $local-prefix: '') {
+  // @debug map $map;
+  // @debug bps map.keys($map);
+  $_prefix: if(string.length($local-prefix) > 0, $local-prefix + '-', '');
+
+  @each $breakpoint in map.keys($map) {
+    @include media-breakpoint-up($breakpoint) {
+      @if ($breakpoint == 'xs') {
+        // @debug map map.get($map, $breakpoint);
+        @each $custom-property-name, $value-object in map.get($map, $breakpoint) {
+          --#{$prefix}#{$_prefix}#{$custom-property-name}: #{map.get($value-object, value)};
+        }
+      } @else {
+        @each $custom-property-name, $value in map.get($map, $breakpoint) {
+          --#{$prefix}#{$_prefix}#{$custom-property-name}: #{$value};
+        }
+      }
+    }
+  }
+}
+
+@mixin generate-custom-properties($map: (), $cp-prefix: $prefix) {
+  @if $map != null {
+    @if map.has-key($map, custom-property-name) {
+      $_name: map.get($map, custom-property-name);
+      $_map: map.get($map, values);
+      // @debug map 1 $_map;
+
+      // convert to a map if $_map is a list
+      $_map: if(meta.type-of($_map) == list, list.zip($_map, $_map), $_map);
+      // @debug _name $_name;
+      // @debug _map 2 $_map;
+
+      @if $_map {
+        @each $key, $value in $_map {
+          // @debug key $key;
+          // @debug value $value;
+
+          @if ($key != 'none') {
+            $_key: if($key != null, if($key == 0, '-0', -$key), '');
+            --#{$cp-prefix}#{$_name}#{$_key}: #{$value};
+          }
+        }
+      }
+    } @else {
+      @each $key, $value in $map {
+        @if $key != xs {
+          --#{$cp-prefix}#{$key}: #{$value};
+        }
+      }
+    }
+  }
+}
+
+@mixin generate-simple-custom-properties($map: (), $cp-prefix: $prefix) {
+  @if list.length(map.keys($map)) > 0 {
+    @each $key, $value in $map {
+      @if (meta.type-of($value) == map) {
+        --#{$prefix}#{$cp-prefix}#{$key}: #{map.get($value, value)};
+      } @else {
+        --#{$prefix}#{$cp-prefix}#{$key}: #{$value};
+      }
+    }
+  }
+}
+@mixin generate-clamp-custom-properties($clamp-map, $clamp-prefix: '') {
+  // Only loop if the map has entries
+  @if (list.length(map.keys($clamp-map)) > 0) {
+    @each $key, $map in $clamp-map {
+      // @debug key $key;
+      // @debug map $map;
+
+      $relative-to: if(map.has-key($map, relative-to), map.get($map, relative-to), 'viewport');
+
+      $threshold-unit: if(map.has-key($map, threshold-unit), map.get($map, threshold-unit), 'px');
+      $preferred-unit: if(map.has-key($map, preferred-unit), map.get($map, preferred-unit), 'px');
+
+      $threshold-keys: map.keys(map.get($map, threshold));
+      $threshold-map: map.get($map, threshold);
+      // @debug th $threshold-keys;
+
+      $min-size: map.get($threshold-map, list.nth($threshold-keys, 1));
+      $max-size: map.get($threshold-map, list.nth($threshold-keys, 2));
+
+      // @debug list 1 list.nth($threshold-keys, 1);
+      // @debug list 2 list.nth($threshold-keys, 2);
+
+      // @debug min-size $min-size;
+      // @debug max-size $max-size;
+
+      $min-viewport: remove-unit-and-convert(list.nth($threshold-keys, 1));
+      $max-viewport: remove-unit-and-convert(list.nth($threshold-keys, 2));
+
+      // @debug min-viewport $min-viewport;
+      // @debug max-viewport $max-viewport;
+
+      $delta-size: $max-size - $min-size;
+      $delta-viewport: $max-viewport - $min-viewport;
+      $change: round-to(math.div($delta-size, $delta-viewport), 6);
+
+      $preferred: if(
+        $preferred-unit == 'rem',
+        round-to(math.div($max-size - ($max-viewport * $change), 16) * 1rem, 4),
+        round-to($max-size - ($max-viewport * $change), 4) * 1px
+      );
+
+      $rate-of-change: null;
+
+      @if $relative-to == 'viewport' {
+        $rate-of-change: round-to(100vw * $change);
+      } @else if $relative-to == 'container' {
+        $rate-of-change: round-to(100cqi * $change);
+      } @else {
+        @error 'Invalid value for $relativeTo. Expected "viewport" or "container".';
+      }
+
+      $min-size: if($threshold-unit == 'rem', px-to-rem($min-size), $min-size * 1px);
+      $max-size: if($threshold-unit == 'rem', px-to-rem($max-size), $max-size * 1px);
+
+      --#{$prefix}#{$clamp-prefix}-#{$key}: clamp(#{$min-size}, calc(#{$preferred} + #{$rate-of-change}), #{$max-size});
+    }
+  }
+}
+
+@mixin generate-clamp-custom-properties_og(
+  $clamp-map,
+  $clamp-prefix: '',
+  $relative-to: 'viewport',
+  $threshold-unit: 'px',
+  $unit: 'px'
+) {
+  // @debug unit $unit;
+
+  @each $key, $map in $clamp-map {
+    @debug map $map;
+
+    $threshold: map.keys($map);
+    @debug th $threshold;
+    $sizeMin: map.get($map, list.nth($threshold, 1));
+    $sizeMax: map.get($map, list.nth($threshold, 2));
+
+    @debug list 1 list.nth($threshold, 1);
+    @debug list 2 list.nth($threshold, 2);
+
+    @debug sizeMin $sizeMin;
+    @debug sizeMax $sizeMax;
+
+    // $viewportMin: remove-unit-and-convert(
+    //   map.get($grid-breakpoints, list.nth($threshold, 1))
+    // );
+    // $viewportMax: remove-unit-and-convert(
+    //   map.get($grid-breakpoints, list.nth($threshold, 2))
+    // );
+
+    $viewportMin: remove-unit-and-convert(list.nth($threshold, 1));
+    $viewportMax: remove-unit-and-convert(list.nth($threshold, 2));
+
+    @debug viewportMin $viewportMin;
+    @debug viewportMax $viewportMax;
+
+    $deltaSize: $sizeMax - $sizeMin;
+    $deltaViewport: $viewportMax - $viewportMin;
+    $change: round-to(math.div($deltaSize, $deltaViewport), 6);
+
+    // @debug change $change;
+    // @debug $change * 100vw;
+
+    // $preferred: round-to($sizeMax - ($viewportMax * $change), 4) * 1px;
+    $preferred: if(
+      $unit == 'rem',
+      round-to(math.div($sizeMax - ($viewportMax * $change), 16) * 1rem, 4),
+      round-to($sizeMax - ($viewportMax * $change), 4) * 1px
+    );
+
+    $rateOfChange: null;
+
+    @if $relative-to == 'viewport' {
+      $rateOfChange: round-to(100vw * $change);
+    } @else if $relative-to == 'container' {
+      $rateOfChange: round-to(100cqi * $change);
+    } @else {
+      @error 'Invalid value for $relativeTo. Expected "viewport" or "container".';
+    }
+
+    $sizeMin: if($threshold-unit == 'rem', px-to-rem($sizeMin), $sizeMin * 1px);
+    $sizeMax: if($threshold-unit == 'rem', px-to-rem($sizeMax), $sizeMax * 1px);
+
+    --#{$prefix}#{$clamp-prefix}#{$key}: clamp(#{$sizeMin}, calc(#{$preferred} + #{$rateOfChange}), #{$sizeMax});
+  }
+}
+
+@mixin generate-color-themes($color-theme, $removed-theme: 'default') {
+  // @debug color-theme $color-theme;
+  // @debug meta.type-of($color-theme);
+
+  $_theme-map: map.remove($color-theme, $removed-theme);
+  // @debug _theme-map $_theme-map;
+  // @debug meta meta.type-of($_theme-map);
+
+  @each $theme, $color-map, $color-hover in $_theme-map {
+    $colors: map.get($color-map, color);
+    $colors-hover: if(map.get($color-map, hover) != null, map.get($color-map, hover), ());
+    // @debug theme $theme;
+    // @debug color $colors;
+    // @debug color-hover $colors-hover;
+
+    [data-theme='#{$theme}'] {
+      $colors-rgb: map-loop($colors, to-rgb, '$value');
+      @include generate-color-custom-properties($colors, $color-prefix);
+      @include generate-color-custom-properties-rgb($colors-rgb, $color-prefix);
+      @include generate-color-custom-properties($colors-hover, $hover-prefix);
+    }
+  }
+}
+
+@mixin generate-color-custom-properties($color-theme, $color-prefix: 'clr-') {
+  // @debug meta.type-of($color-theme);
+
+  @each $color-name, $value in $color-theme {
+    @if (meta.type-of($value) == 'color') {
+      --#{$prefix}#{$color-prefix}#{$color-name}: #{$value};
+    } @else {
+      @error 'the color input is not correct';
+    }
+  }
+}
+
+@mixin generate-color-custom-properties-rgb($color-theme-map: (), $color-prefix: 'clr-') {
+  // Only loop if the map has entries
+  @if list.length(map.keys($color-theme-map)) > 0 {
+    @each $color, $rgb-value in $color-theme-map {
+      $type: meta.type-of($rgb-value);
+
+      @if ($type == 'list') {
+        --#{$prefix}#{$color-prefix}#{$color}-rgb: #{$rgb-value};
+      } @else {
+        @error 'the color input is not correct';
+      }
+    }
+  }
+}
